@@ -34,35 +34,38 @@
 #ifndef DWB_CRITICS__GOAL_ALIGN_HPP_
 #define DWB_CRITICS__GOAL_ALIGN_HPP_
 
-#include <vector>
-#include <string>
 #include "dwb_critics/goal_dist.hpp"
+#include <string>
+#include <vector>
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 
 /**
  * @class GoalAlignCritic
- * @brief Scores trajectories based on whether the robot ends up pointing toward the eventual goal
+ * @brief Scores trajectories based on whether the robot ends up pointing toward
+ * the eventual goal
  *
- * Similar to GoalDistCritic, this critic finds the pose from the global path farthest from the robot
- * that is still on the costmap and then evaluates how far the front of the robot is from that point.
- * This works as a proxy to calculating which way the robot should be pointing.
+ * Similar to GoalDistCritic, this critic finds the pose from the global path
+ * farthest from the robot that is still on the costmap and then evaluates how
+ * far the front of the robot is from that point. This works as a proxy to
+ * calculating which way the robot should be pointing.
  */
-class GoalAlignCritic : public GoalDistCritic
-{
+class GoalAlignCritic : public GoalDistCritic {
 public:
-  GoalAlignCritic()
-  : forward_point_distance_(0.0) {}
+  GoalAlignCritic() : forward_point_distance_(0.0) {}
   void onInit() override;
-  bool prepare(
-    const geometry_msgs::msg::Pose2D & pose, const nav_2d_msgs::msg::Twist2D & vel,
-    const geometry_msgs::msg::Pose2D & goal, const nav_2d_msgs::msg::Path2D & global_plan) override;
-  double scorePose(const geometry_msgs::msg::Pose2D & pose) override;
+  bool prepare(const geometry_msgs::msg::Pose2D &pose,
+               const nav_2d_msgs::msg::Twist2D &vel,
+               const geometry_msgs::msg::Pose2D &goal,
+               const nav_2d_msgs::msg::Path2D &global_plan) override;
+  double scorePose(const geometry_msgs::msg::Pose2D &pose) override;
 
 protected:
+  rcl_interfaces::msg::SetParametersResult
+  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters) override;
+
   double forward_point_distance_;
 };
 
-}  // namespace dwb_critics
-#endif  // DWB_CRITICS__GOAL_ALIGN_HPP_
+} // namespace dwb_critics
+#endif // DWB_CRITICS__GOAL_ALIGN_HPP_

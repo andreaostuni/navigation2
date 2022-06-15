@@ -33,29 +33,26 @@
  */
 
 #include "dwb_critics/goal_align.hpp"
-#include <vector>
-#include <string>
 #include "dwb_critics/alignment_util.hpp"
-#include "pluginlib/class_list_macros.hpp"
 #include "nav_2d_utils/parameters.hpp"
+#include "pluginlib/class_list_macros.hpp"
+#include <mutex>
+#include <string>
+#include <vector>
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 
-void GoalAlignCritic::onInit()
-{
+void GoalAlignCritic::onInit() {
   GoalDistCritic::onInit();
   stop_on_failure_ = false;
   forward_point_distance_ = nav_2d_utils::searchAndGetParam(
-    nh_,
-    dwb_plugin_name_ + "." + name_ + ".forward_point_distance", 0.325);
+      nh_, dwb_plugin_name_ + "." + name_ + ".forward_point_distance", 0.325);
 }
 
-bool GoalAlignCritic::prepare(
-  const geometry_msgs::msg::Pose2D & pose, const nav_2d_msgs::msg::Twist2D & vel,
-  const geometry_msgs::msg::Pose2D & goal,
-  const nav_2d_msgs::msg::Path2D & global_plan)
-{
+bool GoalAlignCritic::prepare(const geometry_msgs::msg::Pose2D &pose,
+                              const nav_2d_msgs::msg::Twist2D &vel,
+                              const geometry_msgs::msg::Pose2D &goal,
+                              const nav_2d_msgs::msg::Path2D &global_plan) {
   // we want the robot nose to be drawn to its final position
   // (before robot turns towards goal orientation), not the end of the
   // path for the robot center. Choosing the final position after
@@ -70,11 +67,35 @@ bool GoalAlignCritic::prepare(
   return GoalDistCritic::prepare(pose, vel, goal, target_poses);
 }
 
-double GoalAlignCritic::scorePose(const geometry_msgs::msg::Pose2D & pose)
-{
-  return GoalDistCritic::scorePose(getForwardPose(pose, forward_point_distance_));
+double GoalAlignCritic::scorePose(const geometry_msgs::msg::Pose2D &pose) {
+  return GoalDistCritic::scorePose(
+      getForwardPose(pose, forward_point_distance_));
 }
 
-}  // namespace dwb_critics
+rcl_interfaces::msg::SetParametersResult
+GoalAlignCritic::dynamicParametersCallback(
+    std::vector<rclcpp::Parameter> parameters) {
+  rcl_interfaces::msg::SetParametersResult result;
+
+  for (auto parameter : parameters) {
+    const auto &param_type = parameter.get_type();
+    const auto &param_name = parameter.get_name();
+
+    if (param_type == ParameterType::PARAMETER_DOUBLE) {
+      if (param_name == dwb_plugin_name_ + "." + name_ + ".scale" &&
+          scale_ != parameter.as_double()) {
+        scale_ = parameter.as_double();
+      } else if (param_name == dwb_plugin_name_ + "." + name_ +
+                                   ".forward_point_distance" &&
+                 forward_point_distance_ != parameter.as_double()) {
+        forward_point_distance_ = parameter.as_double();
+      }
+    }
+  }
+  result.successful = true;
+  return result;
+}
+
+} // namespace dwb_critics
 
 PLUGINLIB_EXPORT_CLASS(dwb_critics::GoalAlignCritic, dwb_core::TrajectoryCritic)

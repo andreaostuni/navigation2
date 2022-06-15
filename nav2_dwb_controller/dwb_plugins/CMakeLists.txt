@@ -31,6 +31,7 @@ add_library(standard_traj_generator SHARED
             src/standard_traj_generator.cpp
             src/limited_accel_generator.cpp
             src/kinematic_parameters.cpp
+            src/sampling_parameters.cpp
             src/xy_theta_iterator.cpp)
 ament_target_dependencies(standard_traj_generator ${dependencies})
 # prevent pluginlib from using boost

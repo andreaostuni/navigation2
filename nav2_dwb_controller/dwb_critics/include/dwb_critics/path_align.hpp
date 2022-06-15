@@ -34,41 +34,44 @@
 #ifndef DWB_CRITICS__PATH_ALIGN_HPP_
 #define DWB_CRITICS__PATH_ALIGN_HPP_
 
-#include <vector>
-#include <string>
 #include "dwb_critics/path_dist.hpp"
+#include <string>
+#include <vector>
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 /**
  * @class PathAlignCritic
- * @brief Scores trajectories based on how far from the global path the front of the robot ends up.
+ * @brief Scores trajectories based on how far from the global path the front of
+ * the robot ends up.
  *
- * This uses the costmap grid as a proxy for calculating which way the robot should be facing relative
- * to the global path. Instead of scoring how far the center of the robot is away from the global path,
- * this critic calculates how far a point forward_point_distance in front of the robot is from the global
- * path. This biases the planner toward trajectories that line up with the global plan.
+ * This uses the costmap grid as a proxy for calculating which way the robot
+ * should be facing relative to the global path. Instead of scoring how far the
+ * center of the robot is away from the global path, this critic calculates how
+ * far a point forward_point_distance in front of the robot is from the global
+ * path. This biases the planner toward trajectories that line up with the
+ * global plan.
  *
- * When the robot is near the end of the path, the scale of this critic is set to zero. When the projected
- * point is past the global goal, we no longer want this critic to try to align to a part of the global path
- * that isn't there.
+ * When the robot is near the end of the path, the scale of this critic is set
+ * to zero. When the projected point is past the global goal, we no longer want
+ * this critic to try to align to a part of the global path that isn't there.
  */
-class PathAlignCritic : public PathDistCritic
-{
+class PathAlignCritic : public PathDistCritic {
 public:
-  PathAlignCritic()
-  : zero_scale_(false), forward_point_distance_(0.0) {}
+  PathAlignCritic() : zero_scale_(false), forward_point_distance_(0.0) {}
   void onInit() override;
-  bool prepare(
-    const geometry_msgs::msg::Pose2D & pose, const nav_2d_msgs::msg::Twist2D & vel,
-    const geometry_msgs::msg::Pose2D & goal, const nav_2d_msgs::msg::Path2D & global_plan) override;
+  bool prepare(const geometry_msgs::msg::Pose2D &pose,
+               const nav_2d_msgs::msg::Twist2D &vel,
+               const geometry_msgs::msg::Pose2D &goal,
+               const nav_2d_msgs::msg::Path2D &global_plan) override;
   double getScale() const override;
-  double scorePose(const geometry_msgs::msg::Pose2D & pose) override;
+  double scorePose(const geometry_msgs::msg::Pose2D &pose) override;
 
 protected:
+  rcl_interfaces::msg::SetParametersResult
+  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters) override;
   bool zero_scale_;
   double forward_point_distance_;
 };
 
-}  // namespace dwb_critics
-#endif  // DWB_CRITICS__PATH_ALIGN_HPP_
+} // namespace dwb_critics
+#endif // DWB_CRITICS__PATH_ALIGN_HPP_

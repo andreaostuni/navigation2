@@ -35,44 +35,47 @@
 #ifndef DWB_CRITICS__OBSTACLE_FOOTPRINT_HPP_
 #define DWB_CRITICS__OBSTACLE_FOOTPRINT_HPP_
 
-#include <vector>
 #include "dwb_critics/base_obstacle.hpp"
+#include <vector>
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 typedef std::vector<geometry_msgs::msg::Point> Footprint;
 
 /**
  * @brief Transform the footprint spec to be centered at the given pose
  * @param pose Robot pose
- * @param footprint_spec List of points that make up the footprint spec, centered at 0,0
+ * @param footprint_spec List of points that make up the footprint spec,
+ * centered at 0,0
  * @return oriented footprint
  */
-Footprint getOrientedFootprint(
-  const geometry_msgs::msg::Pose2D & pose,
-  const Footprint & footprint_spec);
+Footprint getOrientedFootprint(const geometry_msgs::msg::Pose2D &pose,
+                               const Footprint &footprint_spec);
 
 /**
  * @class ObstacleFootprintCritic
- * @brief Uses costmap 2d to assign negative costs if robot footprint is in obstacle on any point of the trajectory.
+ * @brief Uses costmap 2d to assign negative costs if robot footprint is in
+ * obstacle on any point of the trajectory.
  *
- * Internally, this technically only checks if the border of the footprint collides with anything for computational
- * efficiency. This is valid if the obstacles in the local costmap are inflated.
+ * Internally, this technically only checks if the border of the footprint
+ * collides with anything for computational efficiency. This is valid if the
+ * obstacles in the local costmap are inflated.
  *
- * A more robust class could check every cell within the robot's footprint without inflating the obstacles,
- * at some computational cost. That is left as an excercise to the reader.
+ * A more robust class could check every cell within the robot's footprint
+ * without inflating the obstacles, at some computational cost. That is left as
+ * an excercise to the reader.
  */
-class ObstacleFootprintCritic : public BaseObstacleCritic
-{
+class ObstacleFootprintCritic : public BaseObstacleCritic {
 public:
-  bool prepare(
-    const geometry_msgs::msg::Pose2D & pose, const nav_2d_msgs::msg::Twist2D & vel,
-    const geometry_msgs::msg::Pose2D & goal, const nav_2d_msgs::msg::Path2D & global_plan) override;
-  double scorePose(const geometry_msgs::msg::Pose2D & pose) override;
-  virtual double scorePose(
-    const geometry_msgs::msg::Pose2D & pose,
-    const Footprint & oriented_footprint);
-  double getScale() const override {return costmap_->getResolution() * scale_;}
+  bool prepare(const geometry_msgs::msg::Pose2D &pose,
+               const nav_2d_msgs::msg::Twist2D &vel,
+               const geometry_msgs::msg::Pose2D &goal,
+               const nav_2d_msgs::msg::Path2D &global_plan) override;
+  double scorePose(const geometry_msgs::msg::Pose2D &pose) override;
+  virtual double scorePose(const geometry_msgs::msg::Pose2D &pose,
+                           const Footprint &oriented_footprint);
+  double getScale() const override {
+    return costmap_->getResolution() * scale_;
+  }
 
 protected:
   /**
@@ -95,6 +98,6 @@ protected:
 
   Footprint footprint_spec_;
 };
-}  // namespace dwb_critics
+} // namespace dwb_critics
 
-#endif  // DWB_CRITICS__OBSTACLE_FOOTPRINT_HPP_
+#endif // DWB_CRITICS__OBSTACLE_FOOTPRINT_HPP_

@@ -34,27 +34,27 @@
 
 #include "dwb_critics/base_obstacle.hpp"
 #include "dwb_core/exceptions.hpp"
-#include "pluginlib/class_list_macros.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "pluginlib/class_list_macros.hpp"
 
-PLUGINLIB_EXPORT_CLASS(dwb_critics::BaseObstacleCritic, dwb_core::TrajectoryCritic)
+PLUGINLIB_EXPORT_CLASS(dwb_critics::BaseObstacleCritic,
+                       dwb_core::TrajectoryCritic)
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 
-void BaseObstacleCritic::onInit()
-{
+void BaseObstacleCritic::onInit() {
   costmap_ = costmap_ros_->getCostmap();
 
   nav2_util::declare_parameter_if_not_declared(
-    nh_,
-    dwb_plugin_name_ + "." + name_ + ".sum_scores", rclcpp::ParameterValue(false));
-  nh_->get_parameter(dwb_plugin_name_ + "." + name_ + ".sum_scores", sum_scores_);
+      nh_, dwb_plugin_name_ + "." + name_ + ".sum_scores",
+      rclcpp::ParameterValue(false));
+  nh_->get_parameter(dwb_plugin_name_ + "." + name_ + ".sum_scores",
+                     sum_scores_);
 }
 
-double BaseObstacleCritic::scoreTrajectory(const dwb_msgs::msg::Trajectory2D & traj)
-{
+double
+BaseObstacleCritic::scoreTrajectory(const dwb_msgs::msg::Trajectory2D &traj) {
   double score = 0.0;
   for (unsigned int i = 0; i < traj.poses.size(); ++i) {
     double pose_score = scorePose(traj.poses[i]);
@@ -65,30 +65,28 @@ double BaseObstacleCritic::scoreTrajectory(const dwb_msgs::msg::Trajectory2D & t
   return score;
 }
 
-double BaseObstacleCritic::scorePose(const geometry_msgs::msg::Pose2D & pose)
-{
+double BaseObstacleCritic::scorePose(const geometry_msgs::msg::Pose2D &pose) {
   unsigned int cell_x, cell_y;
   if (!costmap_->worldToMap(pose.x, pose.y, cell_x, cell_y)) {
-    throw dwb_core::
-          IllegalTrajectoryException(name_, "Trajectory Goes Off Grid.");
+    throw dwb_core::IllegalTrajectoryException(name_,
+                                               "Trajectory Goes Off Grid.");
   }
   unsigned char cost = costmap_->getCost(cell_x, cell_y);
   if (!isValidCost(cost)) {
-    throw dwb_core::
-          IllegalTrajectoryException(name_, "Trajectory Hits Obstacle.");
+    throw dwb_core::IllegalTrajectoryException(name_,
+                                               "Trajectory Hits Obstacle.");
   }
   return cost;
 }
 
-bool BaseObstacleCritic::isValidCost(const unsigned char cost)
-{
+bool BaseObstacleCritic::isValidCost(const unsigned char cost) {
   return cost != nav2_costmap_2d::LETHAL_OBSTACLE &&
          cost != nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE &&
          cost != nav2_costmap_2d::NO_INFORMATION;
 }
 
-void BaseObstacleCritic::addCriticVisualization(sensor_msgs::msg::PointCloud & pc)
-{
+void BaseObstacleCritic::addCriticVisualization(
+    sensor_msgs::msg::PointCloud &pc) {
   sensor_msgs::msg::ChannelFloat32 grid_scores;
   grid_scores.name = name_;
 
@@ -105,4 +103,30 @@ void BaseObstacleCritic::addCriticVisualization(sensor_msgs::msg::PointCloud & p
   pc.channels.push_back(grid_scores);
 }
 
-}  // namespace dwb_critics
+rcl_interfaces::msg::SetParametersResult
+BaseObstacleCritic::dynamicParametersCallback(
+    std::vector<rclcpp::Parameter> parameters) {
+  std::lock_guard<TrajectoryCritic::mutex_t> guard(*getMutex());
+  rcl_interfaces::msg::SetParametersResult result;
+
+  for (auto parameter : parameters) {
+    const auto &param_type = parameter.get_type();
+    const auto &param_name = parameter.get_name();
+
+    if (param_type == ParameterType::PARAMETER_DOUBLE) {
+      if (param_name == dwb_plugin_name_ + "." + name_ + ".scale" &&
+          scale_ != parameter.as_double()) {
+        scale_ = parameter.as_double();
+      }
+    } else if (param_type == ParameterType::PARAMETER_BOOL) {
+      if (param_name == dwb_plugin_name_ + "." + name_ + ".sum_scores" &&
+          sum_scores_ != parameter.as_bool()) {
+        sum_scores_ = parameter.as_bool();
+      }
+    }
+  }
+  result.successful = true;
+  return result;
+}
+
+} // namespace dwb_critics

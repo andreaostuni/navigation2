@@ -37,31 +37,32 @@
 
 #include "dwb_core/trajectory_critic.hpp"
 
-namespace dwb_critics
-{
+namespace dwb_critics {
 /**
  * @class BaseObstacleCritic
- * @brief Uses costmap 2d to assign negative costs if a circular robot would collide at any point of the trajectory.
+ * @brief Uses costmap 2d to assign negative costs if a circular robot would
+ * collide at any point of the trajectory.
  *
- * This class can only be used to figure out if a circular robot is in collision. If the cell corresponding
- * with any of the poses in the Trajectory is an obstacle, inscribed obstacle or unknown, it will return a
- * negative cost. Otherwise it will return either the final pose's cost, or the sum of all poses, depending
- * on the sum_scores parameter.
+ * This class can only be used to figure out if a circular robot is in
+ * collision. If the cell corresponding with any of the poses in the Trajectory
+ * is an obstacle, inscribed obstacle or unknown, it will return a negative
+ * cost. Otherwise it will return either the final pose's cost, or the sum of
+ * all poses, depending on the sum_scores parameter.
  *
- * Other classes (like ObstacleFootprintCritic) can do more advanced checking for collisions.
+ * Other classes (like ObstacleFootprintCritic) can do more advanced checking
+ * for collisions.
  */
-class BaseObstacleCritic : public dwb_core::TrajectoryCritic
-{
+class BaseObstacleCritic : public dwb_core::TrajectoryCritic {
 public:
   void onInit() override;
-  double scoreTrajectory(const dwb_msgs::msg::Trajectory2D & traj) override;
-  void addCriticVisualization(sensor_msgs::msg::PointCloud & pc) override;
+  double scoreTrajectory(const dwb_msgs::msg::Trajectory2D &traj) override;
+  void addCriticVisualization(sensor_msgs::msg::PointCloud &pc) override;
 
   /**
    * @brief Return the obstacle score for a particular pose
    * @param pose Pose to check
    */
-  virtual double scorePose(const geometry_msgs::msg::Pose2D & pose);
+  virtual double scorePose(const geometry_msgs::msg::Pose2D &pose);
 
   /**
    * @brief Check to see whether a given cell cost is valid for driving through.
@@ -71,9 +72,11 @@ public:
   virtual bool isValidCost(const unsigned char cost);
 
 protected:
-  nav2_costmap_2d::Costmap2D * costmap_;
+  rcl_interfaces::msg::SetParametersResult
+  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters) override;
+  nav2_costmap_2d::Costmap2D *costmap_;
   bool sum_scores_;
 };
-}  // namespace dwb_critics
+} // namespace dwb_critics
 
-#endif  // DWB_CRITICS__BASE_OBSTACLE_HPP_
+#endif // DWB_CRITICS__BASE_OBSTACLE_HPP_

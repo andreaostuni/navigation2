@@ -34,37 +34,30 @@
 
 #include "dwb_core/illegal_trajectory_tracker.hpp"
 #include <map>
-#include <utility>
-#include <string>
 #include <sstream>
+#include <string>
+#include <utility>
 
-namespace dwb_core
-{
+namespace dwb_core {
 void IllegalTrajectoryTracker::addIllegalTrajectory(
-  const dwb_core::IllegalTrajectoryException & e)
-{
+    const dwb_core::IllegalTrajectoryException &e) {
   counts_[std::make_pair(e.getCriticName(), e.what())]++;
   illegal_count_++;
 }
 
-void IllegalTrajectoryTracker::addLegalTrajectory()
-{
-  legal_count_++;
-}
+void IllegalTrajectoryTracker::addLegalTrajectory() { legal_count_++; }
 
-std::map<std::pair<std::string, std::string>,
-  double> IllegalTrajectoryTracker::getPercentages() const
-{
+std::map<std::pair<std::string, std::string>, double>
+IllegalTrajectoryTracker::getPercentages() const {
   std::map<std::pair<std::string, std::string>, double> percents;
   double denominator = static_cast<double>(legal_count_ + illegal_count_);
-  for (auto const & x : counts_) {
+  for (auto const &x : counts_) {
     percents[x.first] = static_cast<double>(x.second) / denominator;
   }
   return percents;
 }
 
-std::string IllegalTrajectoryTracker::getMessage() const
-{
+std::string IllegalTrajectoryTracker::getMessage() const {
   std::ostringstream msg;
   if (legal_count_ == 0) {
     msg << "No valid trajectories out of " << illegal_count_ << "! ";
@@ -77,4 +70,4 @@ std::string IllegalTrajectoryTracker::getMessage() const
   return msg.str();
 }
 
-}  // namespace dwb_core
+} // namespace dwb_core

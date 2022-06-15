@@ -39,21 +39,19 @@
 #define NAV2_COSTMAP_2D__INFLATION_LAYER_HPP_
 
 #include <map>
-#include <vector>
 #include <mutex>
+#include <vector>
 
-#include "rclcpp/rclcpp.hpp"
 #include "nav2_costmap_2d/layer.hpp"
 #include "nav2_costmap_2d/layered_costmap.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-namespace nav2_costmap_2d
-{
+namespace nav2_costmap_2d {
 /**
  * @class CellData
  * @brief Storage for cell information used during obstacle inflation
  */
-class CellData
-{
+class CellData {
 public:
   /**
    * @brief  Constructor for a CellData objects
@@ -64,44 +62,36 @@ public:
    * @param  sy The y coordinate of the closest obstacle cell in the costmap
    * @return
    */
-  CellData(double i, unsigned int x, unsigned int y, unsigned int sx, unsigned int sy)
-  : index_(static_cast<unsigned int>(i)), x_(x), y_(y), src_x_(sx), src_y_(sy)
-  {
-  }
+  CellData(double i, unsigned int x, unsigned int y, unsigned int sx,
+           unsigned int sy)
+      : index_(static_cast<unsigned int>(i)), x_(x), y_(y), src_x_(sx),
+        src_y_(sy) {}
   unsigned int index_;
   unsigned int x_, y_;
   unsigned int src_x_, src_y_;
 };
 
-class InflationLayer : public Layer
-{
+class InflationLayer : public Layer {
 public:
   InflationLayer();
 
   ~InflationLayer();
 
   void onInitialize() override;
-  void updateBounds(
-    double robot_x, double robot_y, double robot_yaw, double * min_x,
-    double * min_y,
-    double * max_x,
-    double * max_y) override;
-  void updateCosts(
-    nav2_costmap_2d::Costmap2D & master_grid,
-    int min_i, int min_j, int max_i, int max_j) override;
+  void updateBounds(double robot_x, double robot_y, double robot_yaw,
+                    double *min_x, double *min_y, double *max_x,
+                    double *max_y) override;
+  void updateCosts(nav2_costmap_2d::Costmap2D &master_grid, int min_i,
+                   int min_j, int max_i, int max_j) override;
 
   void matchSize() override;
 
-  void reset() override
-  {
-    matchSize();
-  }
+  void reset() override { matchSize(); }
 
   /** @brief  Given a distance, compute a cost.
    * @param  distance The distance from an obstacle in cells
    * @return A cost value for the distance */
-  inline unsigned char computeCost(double distance) const
-  {
+  inline unsigned char computeCost(double distance) const {
     unsigned char cost = 0;
     if (distance == 0) {
       cost = LETHAL_OBSTACLE;
@@ -109,19 +99,17 @@ public:
       cost = INSCRIBED_INFLATED_OBSTACLE;
     } else {
       // make sure cost falls off by Euclidean distance
-      double factor =
-        exp(-1.0 * cost_scaling_factor_ * (distance * resolution_ - inscribed_radius_));
-      cost = static_cast<unsigned char>((INSCRIBED_INFLATED_OBSTACLE - 1) * factor);
+      double factor = exp(-1.0 * cost_scaling_factor_ *
+                          (distance * resolution_ - inscribed_radius_));
+      cost = static_cast<unsigned char>((INSCRIBED_INFLATED_OBSTACLE - 1) *
+                                        factor);
     }
     return cost;
   }
 
   // Provide a typedef to ease future code maintenance
   typedef std::recursive_mutex mutex_t;
-  mutex_t * getMutex()
-  {
-    return access_;
-  }
+  mutex_t *getMutex() { return access_; }
 
 protected:
   void onFootprintChanged() override;
@@ -135,10 +123,8 @@ private:
    * @param src_y The y coordinate of the source cell
    * @return
    */
-  inline double distanceLookup(
-    unsigned int mx, unsigned int my, unsigned int src_x,
-    unsigned int src_y)
-  {
+  inline double distanceLookup(unsigned int mx, unsigned int my,
+                               unsigned int src_x, unsigned int src_y) {
     unsigned int dx = (mx > src_x) ? mx - src_x : src_x - mx;
     unsigned int dy = (my > src_y) ? my - src_y : src_y - my;
     return cached_distances_[dx * cache_length_ + dy];
@@ -152,10 +138,8 @@ private:
    * @param src_y The y coordinate of the source cell
    * @return
    */
-  inline unsigned char costLookup(
-    unsigned int mx, unsigned int my, unsigned int src_x,
-    unsigned int src_y)
-  {
+  inline unsigned char costLookup(unsigned int mx, unsigned int my,
+                                  unsigned int src_x, unsigned int src_y) {
     unsigned int dx = (mx > src_x) ? mx - src_x : src_x - mx;
     unsigned int dy = (my > src_y) ? my - src_y : src_y - my;
     return cached_costs_[dx * cache_length_ + dy];
@@ -165,14 +149,19 @@ private:
 
   int generateIntegerDistances();
 
-  unsigned int cellDistance(double world_dist)
-  {
+  unsigned int cellDistance(double world_dist) {
     return layered_costmap_->getCostmap()->cellDistance(world_dist);
   }
 
-  inline void enqueue(
-    unsigned int index, unsigned int mx, unsigned int my,
-    unsigned int src_x, unsigned int src_y);
+  inline void enqueue(unsigned int index, unsigned int mx, unsigned int my,
+                      unsigned int src_x, unsigned int src_y);
+
+  /**
+   * @brief Callback executed when a parameter change is detected
+   * @param event ParameterEvent message
+   */
+  rcl_interfaces::msg::SetParametersResult
+  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
   double inflation_radius_, inscribed_radius_, cost_scaling_factor_;
   bool inflate_unknown_, inflate_around_unknown_;
@@ -192,9 +181,12 @@ private:
 
   // Indicates that the entire costmap should be reinflated next time around.
   bool need_reinflation_;
-  mutex_t * access_;
+  mutex_t *access_;
+  // Dynamic parameters handler
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr
+      dyn_params_handler_;
 };
 
-}  // namespace nav2_costmap_2d
+} // namespace nav2_costmap_2d
 
-#endif  // NAV2_COSTMAP_2D__INFLATION_LAYER_HPP_
+#endif // NAV2_COSTMAP_2D__INFLATION_LAYER_HPP_

@@ -32,50 +32,66 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DWB_PLUGINS__XY_THETA_ITERATOR_HPP_
-#define DWB_PLUGINS__XY_THETA_ITERATOR_HPP_
+#ifndef DWB_PLUGINS__SAMPLING_PARAMETERS_HPP_
+#define DWB_PLUGINS__SAMPLING_PARAMETERS_HPP_
 
 #include <memory>
 #include <string>
 
-#include "dwb_plugins/one_d_velocity_iterator.hpp"
-#include "dwb_plugins/velocity_iterator.hpp"
 #include "nav2_util/lifecycle_node.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace dwb_plugins {
-class XYThetaIterator : public VelocityIterator {
-public:
-  XYThetaIterator()
-      : kinematics_handler_(nullptr), x_it_(nullptr), y_it_(nullptr),
-        th_it_(nullptr) {}
-  void initialize(KinematicsHandler::Ptr kinematics,
-                  SamplingParamHandler::Ptr sampling_params) override;
-  void startNewIteration(const nav_2d_msgs::msg::Twist2D &current_velocity,
-                         double dt) override;
-  bool hasMoreTwists() override;
-  nav_2d_msgs::msg::Twist2D nextTwist() override;
+
+/**
+ * @struct SamplingParameters
+ * @brief A struct containing one representation of the parameters used to
+ * sample the velocities to generate the trajectories
+ */
+struct SamplingParameters {
+  friend class SamplingParamHandler;
+
+  inline int getSamplesVX() { return vx_samples_; }
+  inline int getSamplesVY() { return vy_samples_; }
+  inline int getSamplesVTheta() { return vtheta_samples_; }
 
 protected:
-  /**
-   * @brief Check to see whether the combined x/y/theta velocities are valid
-   * @return True if the magnitude hypot(x,y) and theta are within the robot's
-   * absolute limits
-   *
-   * This is based on three parameters: min_speed_xy, max_speed_xy and
-   * min_speed_theta. The speed is valid if 1) The combined magnitude hypot(x,y)
-   * is less than max_speed_xy (or max_speed_xy is negative) AND 2) min_speed_xy
-   * is negative or min_speed_theta is negative or hypot(x,y) is greater than
-   * min_speed_xy or fabs(theta) is greater than min_speed_theta.
-   */
-  bool isValidSpeed(double x, double y, double theta);
-  virtual bool isValidVelocity();
-  void iterateToValidVelocity();
-  // int vx_samples_, vy_samples_, vtheta_samples_;
-  KinematicsHandler::Ptr kinematics_handler_;
-  SamplingParamHandler::Ptr sampling_params_handler_;
-
-  std::shared_ptr<OneDVelocityIterator> x_it_, y_it_, th_it_;
+  // For parameter descriptions, see cfg/SamplingParams.cfg
+  int vx_samples_{0};
+  int vy_samples_{0};
+  int vtheta_samples_{0};
 };
+
+/**
+ * @class KinematicsHandler
+ * @brief A class managing the representation of the robot's kinematics
+ */
+class SamplingParamHandler {
+public:
+  SamplingParamHandler();
+  ~SamplingParamHandler();
+  void initialize(const nav2_util::LifecycleNode::SharedPtr &nh,
+                  const std::string &plugin_name);
+
+  inline SamplingParameters getSamplingParams() {
+    return *sampling_params_.load();
+  }
+
+  using Ptr = std::shared_ptr<SamplingParamHandler>;
+
+protected:
+  std::atomic<SamplingParameters *> sampling_params_;
+
+  // Subscription for parameter change
+  rclcpp::AsyncParametersClient::SharedPtr parameters_client_;
+  rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr
+      parameter_event_sub_;
+  void on_parameter_event_callback(
+      const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+  void update_sampling_params(SamplingParameters sampling_params);
+  std::string plugin_name_;
+};
+
 } // namespace dwb_plugins
 
-#endif // DWB_PLUGINS__XY_THETA_ITERATOR_HPP_
+#endif // DWB_PLUGINS__SAMPLING_PARAMETERS_HPP_
