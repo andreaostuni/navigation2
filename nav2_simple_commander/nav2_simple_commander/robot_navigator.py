@@ -50,11 +50,11 @@ class BasicNavigator(Node):
         self.feedback = None
         self.status = None
 
-        amcl_pose_qos = QoSProfile(
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            reliability=QoSReliabilityPolicy.RELIABLE,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1)
+        # amcl_pose_qos = QoSProfile(
+        #     durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        #     reliability=QoSReliabilityPolicy.RELIABLE,
+        #     history=QoSHistoryPolicy.KEEP_LAST,
+        #     depth=1)
 
         self.initial_pose_received = False
 
@@ -64,10 +64,10 @@ class BasicNavigator(Node):
             self, FollowWaypoints, 'follow_waypoints')
         self.compute_path_to_pose_client = ActionClient(self, ComputePathToPose,
                                                         'compute_path_to_pose')
-        self.localization_pose_sub = self.create_subscription(PoseWithCovarianceStamped,
-                                                              'amcl_pose',
-                                                              self._amclPoseCallback,
-                                                              amcl_pose_qos)
+        # self.localization_pose_sub = self.create_subscription(PoseWithCovarianceStamped,
+        #                                                       'amcl_pose',
+        #                                                       self._amclPoseCallback,
+        #                                                       amcl_pose_qos)
         self.initial_pose_pub = self.create_publisher(PoseWithCovarianceStamped,
                                                       'initialpose',
                                                       10)
@@ -179,7 +179,7 @@ class BasicNavigator(Node):
 
     def waitUntilNav2Active(self):
         """Block until the full navigation system is up and running."""
-        self._waitForNodeToActivate('amcl')
+        # self._waitForNodeToActivate('amcl')
         self._waitForInitialPose()
         self._waitForNodeToActivate('bt_navigator')
         self.info('Nav2 is ready for use!')
