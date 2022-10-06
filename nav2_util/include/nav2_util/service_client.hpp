@@ -23,28 +23,23 @@
 namespace nav2_util
 {
 
-template<class ServiceT>
+template<class ServiceT, typename NodeT = rclcpp::Node::SharedPtr>
 class ServiceClient
 {
 public:
   explicit ServiceClient(
     const std::string & service_name,
-    const rclcpp::Node::SharedPtr & provided_node = rclcpp::Node::SharedPtr())
-  : service_name_(service_name)
+    const NodeT & provided_node = rclcpp::Node::SharedPtr())
+  : service_name_(service_name), node_(provided_node)
   {
-    if (provided_node) {
-      node_ = provided_node;
-    } else {
-      node_ = generate_internal_node(service_name + "_Node");
-    }
-    client_ = node_->create_client<ServiceT>(service_name);
+    client_ = node_->template create_client<ServiceT>(service_name);
   }
 
   ServiceClient(const std::string & service_name, const std::string & parent_name)
   : service_name_(service_name)
   {
     node_ = generate_internal_node(parent_name + std::string("_") + service_name + "_client");
-    client_ = node_->create_client<ServiceT>(service_name);
+    client_ = node_->template create_client<ServiceT>(service_name);
   }
 
   using RequestType = typename ServiceT::Request;
@@ -121,7 +116,7 @@ public:
 
 protected:
   std::string service_name_;
-  rclcpp::Node::SharedPtr node_;
+  NodeT node_;
   typename rclcpp::Client<ServiceT>::SharedPtr client_;
 };
 
