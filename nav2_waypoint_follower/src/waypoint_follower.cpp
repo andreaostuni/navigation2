@@ -68,7 +68,7 @@ WaypointFollower::on_configure(const rclcpp_lifecycle::State & /*state*/)
     get_node_clock_interface(),
     get_node_logging_interface(),
     get_node_waitables_interface(),
-    "FollowWaypoints", std::bind(&WaypointFollower::followWaypointsCallback, this), false);
+    "follow_waypoints", std::bind(&WaypointFollower::followWaypointsCallback, this), false);
 
   from_ll_to_map_client_ = std::make_unique<
     nav2_util::ServiceClient<robot_localization::srv::FromLL,

@@ -33,9 +33,7 @@
 #include "nav2_util/service_client.hpp"
 
 #include "robot_localization/srv/from_ll.hpp"
-// #include "tf2_ros/buffer.h"
-// #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-// #include "tf2_ros/transform_listener.h"
+
 
 namespace nav2_waypoint_follower
 {
