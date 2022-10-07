@@ -49,8 +49,8 @@ WaypointFollower::on_configure(const rclcpp_lifecycle::State & /*state*/)
   stop_on_failure_ = get_parameter("stop_on_failure").as_bool();
   loop_rate_ = get_parameter("loop_rate").as_int();
   global_frame_id_ = get_parameter("global_frame_id").as_string();
-
   global_frame_id_ = nav2_util::strip_leading_slash(global_frame_id_);
+  
 
   std::vector<std::string> new_args = rclcpp::NodeOptions().arguments();
   new_args.push_back("--ros-args");
@@ -68,7 +68,7 @@ WaypointFollower::on_configure(const rclcpp_lifecycle::State & /*state*/)
     get_node_clock_interface(),
     get_node_logging_interface(),
     get_node_waitables_interface(),
-    "FollowWaypoints", std::bind(&WaypointFollower::followWaypointsCallback, this), false);
+    "follow_waypoints", std::bind(&WaypointFollower::followWaypointsCallback, this), false);
 
   from_ll_to_map_client_ = std::make_unique<
     nav2_util::ServiceClient<robot_localization::srv::FromLL,
@@ -82,7 +82,7 @@ WaypointFollower::on_configure(const rclcpp_lifecycle::State & /*state*/)
     get_node_logging_interface(),
     get_node_waitables_interface(),
     "follow_gps_waypoints",
-    std::bind(&WaypointFollower::followGPSWaypointsCallback, this));
+    std::bind(&WaypointFollower::followGPSWaypointsCallback, this),false);
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
