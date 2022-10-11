@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(nav2_waypoint_follower)
 
+set(CMAKE_CXX_STANDARD 17)
+
 find_package(ament_cmake REQUIRED)
 find_package(nav2_common REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -10,6 +12,9 @@ find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(robot_localization REQUIRED)
+find_package(geographic_msgs REQUIRED)
 
 nav2_package()
 
@@ -37,6 +42,8 @@ set(dependencies
   nav2_msgs
   nav2_util
   tf2_ros
+  tf2_geometry_msgs
+  robot_localization
 )
 
 ament_target_dependencies(${executable_name}
