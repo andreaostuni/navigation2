@@ -29,7 +29,7 @@ WaypointFollower::WaypointFollower() : nav2_util::LifecycleNode("WaypointFollowe
 
   declare_parameter("stop_on_failure", true);
   declare_parameter("loop_rate", 20);
-  declare_parameter("global_frame_id", global_frame_id_);
+  declare_parameter("global_frame_id", "map");
 }
 
 WaypointFollower::~WaypointFollower()
