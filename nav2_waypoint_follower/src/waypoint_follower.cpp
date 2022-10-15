@@ -59,8 +59,7 @@ nav2_util::CallbackReturn WaypointFollower::on_configure(const rclcpp_lifecycle:
       std::make_unique<ActionServer>(get_node_base_interface(), get_node_clock_interface(),
                                      get_node_logging_interface(), get_node_waitables_interface(), "FollowWaypoints",
                                      std::bind(&WaypointFollower::followWaypointsCallback, this), false);
-  from_ll_to_map_client_ =
-      std::make_unique<nav2_util::ServiceClient<robot_localization::srv::FromLL>>("/fromLL", client_node_);
+  from_ll_to_map_client_ = std::make_unique<nav2_util::ServiceClient<robot_localization::srv::FromLL>>("/fromLL");
 
   gps_action_server_ = std::make_unique<ActionServerGPS>(
       get_node_base_interface(), get_node_clock_interface(), get_node_logging_interface(),
@@ -131,15 +130,14 @@ void WaypointFollower::followWaypointsHandler(const T& action_server, const V& f
 {
   auto goal = action_server->get_current_goal();
 
-  std::vector<geometry_msgs::msg::PoseStamped> poses;
-  poses = getLatestGoalPoses<T>(action_server);
-
   if (!action_server || !action_server->is_server_active())
   {
     RCLCPP_DEBUG(get_logger(), "Action server inactive. Stopping.");
     return;
   }
 
+  std::vector<geometry_msgs::msg::PoseStamped> poses;
+  poses = getLatestGoalPoses<T>(action_server);
   RCLCPP_INFO(get_logger(), "Received follow waypoint request with %i waypoints.", static_cast<int>(poses.size()));
 
   if (poses.empty())
