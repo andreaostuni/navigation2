@@ -14,6 +14,7 @@
 
 #include "nav2_waypoint_follower/waypoint_follower.hpp"
 
+#include <exception>
 #include <fstream>
 #include <memory>
 #include <streambuf>
@@ -196,6 +197,19 @@ void WaypointFollower::followWaypointsHandler(const T& action_server, const V& f
     feedback->current_waypoint = goal_index;
     action_server->publish_feedback(feedback);
 
+    if (current_goal_status_ == ActionStatus::PREEMPTED)
+    {
+      failed_ids_.push_back(goal_index);
+      RCLCPP_WARN(get_logger(),
+                  "Current action has been preempted and failed to process waypoint %i in waypoint "
+                  "list."
+                  " Terminating action.",
+                  goal_index);
+      result->missed_waypoints = failed_ids_;
+      action_server->terminate_current(result);
+      failed_ids_.clear();
+      return;
+    }
     if (current_goal_status_ == ActionStatus::FAILED)
     {
       failed_ids_.push_back(goal_index);
@@ -257,7 +271,19 @@ void WaypointFollower::followWaypointsCallback()
 {
   auto feedback = std::make_shared<ActionT::Feedback>();
   auto result = std::make_shared<ActionT::Result>();
+  rclcpp::WallRate r(loop_rate_);
 
+  while (rclcpp::ok() && gps_action_server_->is_running())
+  {
+    RCLCPP_INFO(get_logger(), "Terminating the request since it is preempted by a FollowWaypoint request");
+    current_goal_status_ = ActionStatus::PREEMPTED;
+    auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
+    rclcpp::spin_until_future_complete(client_node_, cancel_future);
+    // for result callback processing
+    spin_some(client_node_);
+    // gps_action_server_->terminate_all();
+    r.sleep();
+  }
   followWaypointsHandler<std::unique_ptr<ActionServer>, ActionT::Feedback::SharedPtr, ActionT::Result::SharedPtr>(
       action_server_, feedback, result);
 }
@@ -266,7 +292,18 @@ void WaypointFollower::followGPSWaypointsCallback()
 {
   auto feedback = std::make_shared<ActionTGPS::Feedback>();
   auto result = std::make_shared<ActionTGPS::Result>();
-
+  rclcpp::WallRate r(loop_rate_);
+  while (rclcpp::ok() && action_server_->is_running())
+  {
+    RCLCPP_INFO(get_logger(), "Terminating the request since it is preempted by a FollowGPSWaypoint request");
+    current_goal_status_ = ActionStatus::PREEMPTED;
+    auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
+    rclcpp::spin_until_future_complete(client_node_, cancel_future);
+    // for result callback processing
+    spin_some(client_node_);
+    // action_server_->terminate_all();
+    r.sleep();
+  }
   followWaypointsHandler<std::unique_ptr<ActionServerGPS>, ActionTGPS::Feedback::SharedPtr,
                          ActionTGPS::Result::SharedPtr>(gps_action_server_, feedback, result);
 }

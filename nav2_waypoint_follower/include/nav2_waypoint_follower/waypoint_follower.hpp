@@ -40,7 +40,8 @@ enum class ActionStatus
   UNKNOWN = 0,
   PROCESSING = 1,
   FAILED = 2,
-  SUCCEEDED = 3
+  SUCCEEDED = 3,
+  PREEMPTED = 4
 };
 
 /**
