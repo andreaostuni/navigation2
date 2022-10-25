@@ -289,7 +289,7 @@ void WaypointFollower::followWaypointsHandler(
         get_logger(), "Succeeded processing waypoint %i, processing waypoint task execution",
         goal_index);
       bool is_task_executed = waypoint_task_executor_->processAtWaypoint(
-        goal->poses[goal_index], goal_index);
+        poses[goal_index], goal_index);
       RCLCPP_INFO(
         get_logger(), "Task execution at waypoint %i %s", goal_index,
         is_task_executed ? "succeeded" : "failed!");
@@ -301,7 +301,7 @@ void WaypointFollower::followWaypointsHandler(
           " stop on failure is enabled."
           " Terminating action.", goal_index);
         result->missed_waypoints = failed_ids_;
-        action_server_->terminate_current(result);
+        action_server->terminate_current(result);
         failed_ids_.clear();
         return;
       } else {
