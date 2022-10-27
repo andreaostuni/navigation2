@@ -178,7 +178,8 @@ std::vector<geometry_msgs::msg::PoseStamped> WaypointFollower::getLatestGoalPose
   const T & action_server)
 {
   std::vector<geometry_msgs::msg::PoseStamped> poses;
-
+  auto marker_array = get_marker_array(poses);
+  marker_publisher_->publish(std::move(marker_array));
   // compile time static check to decide which block of code to be built
   if constexpr (std::is_same<T, std::unique_ptr<ActionServer>>::value) {
     // If normal waypoint following callback was called, we build here
@@ -191,7 +192,7 @@ std::vector<geometry_msgs::msg::PoseStamped> WaypointFollower::getLatestGoalPose
       action_server->get_current_goal()->gps_poses);
   }
 
-  auto marker_array = get_marker_array(poses);
+  marker_array = get_marker_array(poses);
   marker_publisher_->publish(std::move(marker_array));
   return poses;
 }
