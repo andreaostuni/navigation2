@@ -38,6 +38,7 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_listener.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 namespace nav2_waypoint_follower
 {
@@ -176,6 +177,16 @@ protected:
   std::vector<geometry_msgs::msg::PoseStamped> getLatestGoalPoses(const T & action_server);
 
   /**
+   * @brief given the poses creates the visualization markers to be visualizad
+   * in rviz
+   *
+   * @param poses the poses from the action server
+   * @return marker_array visualization_msgs::msg::MarkerArray
+   */
+  std::unique_ptr<visualization_msgs::msg::MarkerArray>
+  get_marker_array(std::vector<geometry_msgs::msg::PoseStamped>& poses);
+  
+  /**
    * @brief Callback executed when a parameter change is detected
    * @param event ParameterEvent message
    */
@@ -194,6 +205,7 @@ protected:
   rclcpp::CallbackGroup::SharedPtr callback_group_;
   rclcpp::executors::SingleThreadedExecutor callback_group_executor_;
   std::shared_future<rclcpp_action::ClientGoalHandle<ClientT>::SharedPtr> future_goal_handle_;
+  rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
   bool stop_on_failure_;
   ActionStatus current_goal_status_;
   int loop_rate_;

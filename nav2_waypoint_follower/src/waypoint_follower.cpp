@@ -86,6 +86,9 @@ WaypointFollower::on_configure(const rclcpp_lifecycle::State & /*state*/)
     "/fromLL",
     node);
 
+  marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("waypoints_marker",
+                                                                                   rclcpp::QoS(1).transient_local());
+
   gps_action_server_ = std::make_unique<ActionServerGPS>(
     get_node_base_interface(),
     get_node_clock_interface(),
@@ -120,6 +123,7 @@ WaypointFollower::on_activate(const rclcpp_lifecycle::State & /*state*/)
 
   action_server_->activate();
   gps_action_server_->activate();
+  marker_publisher_->on_activate();
 
   auto node = shared_from_this();
   // Add callback for dynamic parameters
@@ -139,6 +143,7 @@ WaypointFollower::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 
   action_server_->deactivate();
   gps_action_server_->deactivate();
+  marker_publisher_->on_deactivate();
   dyn_params_handler_.reset();
 
   // destroy bond connection
@@ -155,6 +160,7 @@ WaypointFollower::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   action_server_.reset();
   nav_to_pose_client_.reset();
   gps_action_server_.reset();
+  marker_publisher_.reset();
   from_ll_to_map_client_.reset();
 
   return nav2_util::CallbackReturn::SUCCESS;
@@ -184,6 +190,9 @@ std::vector<geometry_msgs::msg::PoseStamped> WaypointFollower::getLatestGoalPose
     poses = convertGPSPosesToMapPoses(
       action_server->get_current_goal()->gps_poses);
   }
+
+  auto marker_array = get_marker_array(poses);
+  marker_publisher_->publish(std::move(marker_array));
   return poses;
 }
 
@@ -478,6 +487,39 @@ WaypointFollower::convertGPSPosesToMapPoses(
   return poses_in_map_frame_vector;
 }
 
+std::unique_ptr<visualization_msgs::msg::MarkerArray>
+WaypointFollower::get_marker_array(std::vector<geometry_msgs::msg::PoseStamped>& poses)
+{
+  auto marker_array = std::make_unique<visualization_msgs::msg::MarkerArray>();
+  for (size_t i = 0; i < poses.size(); i++)
+  {
+    // Draw a green arrow at the waypoint pose
+    visualization_msgs::msg::Marker arrow_marker;
+    arrow_marker.header = poses[i].header;
+    arrow_marker.id = i;
+    arrow_marker.type = visualization_msgs::msg::Marker::ARROW;
+    arrow_marker.action = visualization_msgs::msg::Marker::ADD;
+    arrow_marker.pose = poses[i].pose;
+    arrow_marker.scale.x = 0.3;
+    arrow_marker.scale.y = 0.05;
+    arrow_marker.scale.z = 0.02;
+    arrow_marker.color.r = 0;
+    arrow_marker.color.g = 255;
+    arrow_marker.color.b = 0;
+    arrow_marker.color.a = 1.0f;
+    arrow_marker.lifetime = rclcpp::Duration(0,0);
+    arrow_marker.frame_locked = false;
+    marker_array->markers.push_back(arrow_marker);
+  }
+
+  if (marker_array->markers.empty())
+  {
+    visualization_msgs::msg::Marker clear_all_marker;
+    clear_all_marker.action = visualization_msgs::msg::Marker::DELETEALL;
+    marker_array->markers.push_back(clear_all_marker);
+  }
+  return marker_array;
+}
 
 }  // namespace nav2_waypoint_follower
 
