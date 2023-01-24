@@ -18,6 +18,8 @@ find_package(nav2_util REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(geographic_msgs REQUIRED)
+find_package(robot_localization REQUIRED)
 
 nav2_package()
 
@@ -49,12 +51,19 @@ set(dependencies
   nav2_core
   tf2_ros
   pluginlib
+  geographic_msgs
+  robot_localization
 )
+
+set(targets_plugin 
+    nav2_navigate_to_pose_navigator
+    nav2_navigate_to_gps_pose_navigator
+    nav2_navigate_through_poses
+    nav2_navigate_through_gps_poses
+    )
 
 add_library(${library_name} SHARED
   src/bt_navigator.cpp
-  # src/navigators/navigate_to_pose.cpp
-  # src/navigators/navigate_through_poses.cpp
 )
 
 ament_target_dependencies(${executable_name}
@@ -71,14 +80,22 @@ add_library(nav2_navigate_to_pose_navigator SHARED
   src/navigators/navigate_to_pose.cpp)
 ament_target_dependencies(nav2_navigate_to_pose_navigator ${dependencies})
 
+add_library(nav2_navigate_to_gps_pose_navigator SHARED
+  src/navigators/navigate_to_gps_pose.cpp)
+ament_target_dependencies(nav2_navigate_to_gps_pose_navigator ${dependencies})
+
 add_library(nav2_navigate_through_poses SHARED
   src/navigators/navigate_through_poses.cpp)
 ament_target_dependencies(nav2_navigate_through_poses ${dependencies})
-pluginlib_export_plugin_description_file(nav2_core navigator_plugins.xml)
 
+add_library(nav2_navigate_through_gps_poses SHARED
+  src/navigators/navigate_through_gps_poses.cpp)
+ament_target_dependencies(nav2_navigate_through_gps_poses ${dependencies})
+
+pluginlib_export_plugin_description_file(nav2_core navigator_plugins.xml)
 rclcpp_components_register_nodes(${library_name} "nav2_bt_navigator::BtNavigator")
 
-install(TARGETS ${library_name} nav2_navigate_to_pose_navigator nav2_navigate_through_poses
+install(TARGETS ${library_name} ${targets_plugin}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -92,6 +109,10 @@ install(DIRECTORY include/
   DESTINATION include/
 )
 
+install(FILES navigator_plugins.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 install(DIRECTORY behavior_trees DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
@@ -100,6 +121,6 @@ if(BUILD_TESTING)
 endif()
 
 ament_export_include_directories(include)
-ament_export_libraries(${library_name} nav2_navigate_to_pose_navigator nav2_navigate_through_poses)
+ament_export_libraries(${library_name} ${targets_plugin})
 ament_export_dependencies(${dependencies})
 ament_package()

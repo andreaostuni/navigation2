@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
-#define NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#ifndef NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_GPS_POSES_HPP_
+#define NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH GPS_POSES_HPP_
 
 #include <string>
 #include <vector>
@@ -21,8 +21,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "nav2_core/behavior_tree_navigator.hpp"
-#include "nav2_msgs/action/navigate_through_poses.hpp"
+#include "nav2_bt_navigator/navigators/gps_navigator.hpp"
+#include "nav2_msgs/action/navigate_through_gps_poses.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "nav2_util/robot_utils.hpp"
 #include "nav2_util/geometry_utils.hpp"
@@ -32,21 +32,22 @@ namespace nav2_bt_navigator
 {
 
 /**
- * @class NavigateThroughPosesNavigator
+ * @class NavigateThroughPosesGPSNavigator
  * @brief A navigator for navigating to a a bunch of intermediary poses
  */
-class NavigateThroughPosesNavigator
-  : public nav2_core::BehaviorTreeNavigator<nav2_msgs::action::NavigateThroughPoses>
+class NavigateThroughGPSPosesNavigator
+  : public nav2_bt_navigator::GPSNavigator<nav2_msgs::action::NavigateThroughGPSPoses>
 {
 public:
-  using ActionT = nav2_msgs::action::NavigateThroughPoses;
-  typedef std::vector<geometry_msgs::msg::PoseStamped> Goals;
+  using ActionT = nav2_msgs::action::NavigateThroughGPSPoses;
+  typedef std::vector<geographic_msgs::msg::GeoPose> Goals;
+  typedef std::vector<geometry_msgs::msg::PoseStamped> MapGoals;
 
   /**
-   * @brief A constructor for NavigateThroughPosesNavigator
+   * @brief A constructor for NavigateThroughGPSPosesNavigator
    */
-  NavigateThroughPosesNavigator()
-  : BehaviorTreeNavigator() {}
+  NavigateThroughGPSPosesNavigator()
+  : GPSNavigator(){}
 
   /**
    * @brief A configure state transition to configure navigator's state
@@ -61,7 +62,7 @@ public:
    * @brief Get action name for this navigator
    * @return string Name of action server
    */
-  std::string getName() override {return std::string("navigate_through_poses");}
+  std::string getName() override {return std::string("navigate_through_gps_poses");}
 
   /**
    * @brief Get navigator's default BT
@@ -117,4 +118,4 @@ protected:
 
 }  // namespace nav2_bt_navigator
 
-#endif  // NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#endif  // NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_GPS_POSES_HPP_

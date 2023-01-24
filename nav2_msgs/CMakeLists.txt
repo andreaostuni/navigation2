@@ -40,6 +40,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/FollowPath.action"
   "action/NavigateToPose.action"
   "action/NavigateThroughPoses.action"
+  "action/NavigateToGPSPose.action"
+  "action/NavigateThroughGPSPoses.action"
   "action/Wait.action"
   "action/Spin.action"
   "action/DummyBehavior.action"
