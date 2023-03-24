@@ -7,7 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geographic_msgs/msg/geo_pose.hpp"
+#include "geographic_msgs/msg/geo_pose_stamped.hpp"
 #include "nav2_core/behavior_tree_navigator.hpp"
 #include "nav2_util/geometry_utils.hpp"
 #include "nav2_util/robot_utils.hpp"
@@ -77,7 +77,7 @@ protected:
    */
   std::vector<geometry_msgs::msg::PoseStamped>
     convertGPSPosesToMapPoses(
-    const std::vector<geographic_msgs::msg::GeoPose> & gps_poses)
+    const std::vector<geographic_msgs::msg::GeoPoseStamped> & gps_poses)
   {
     RCLCPP_INFO(
       this->logger_, "Converting GPS waypoints to %s Frame..",
@@ -106,13 +106,13 @@ protected:
    */
   geometry_msgs::msg::PoseStamped
     convertGPSPoseToMapPose(
-    const geographic_msgs::msg::GeoPose & gps_pose)
+    const geographic_msgs::msg::GeoPoseStamped & gps_pose)
   {
     auto request = std::make_shared<robot_localization::srv::FromLL::Request>();
     auto response = std::make_shared<robot_localization::srv::FromLL::Response>();
-    request->ll_point.latitude = gps_pose.position.latitude;
-    request->ll_point.longitude = gps_pose.position.longitude;
-    request->ll_point.altitude = gps_pose.position.altitude;
+    request->ll_point.latitude = gps_pose.pose.position.latitude;
+    request->ll_point.longitude = gps_pose.pose.position.longitude;
+    request->ll_point.altitude = gps_pose.pose.position.altitude;
 
     from_ll_to_map_client_->wait_for_service((std::chrono::seconds(1)));
     if (!from_ll_to_map_client_->invoke(request, response)) {
@@ -125,10 +125,10 @@ protected:
     } 
     else {      
       geometry_msgs::msg::PoseStamped pose_map_frame;
+      pose_map_frame.header= gps_pose.header;
       pose_map_frame.header.frame_id = global_frame_id_;
-      pose_map_frame.header.stamp = this->clock_->now();
       pose_map_frame.pose.position = response->map_point;
-      pose_map_frame.pose.orientation = gps_pose.orientation;
+      pose_map_frame.pose.orientation = gps_pose.pose.orientation;
       return pose_map_frame;
     }
   }

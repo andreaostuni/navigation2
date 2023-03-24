@@ -439,7 +439,7 @@ WaypointFollower::dynamicParametersCallback(std::vector<rclcpp::Parameter> param
 
 std::vector<geometry_msgs::msg::PoseStamped>
 WaypointFollower::convertGPSPosesToMapPoses(
-  const std::vector<geographic_msgs::msg::GeoPose> & gps_poses)
+  const std::vector<geographic_msgs::msg::GeoPoseStamped> & gps_poses)
 {
   RCLCPP_INFO(
     this->get_logger(), "Converting GPS waypoints to %s Frame..",
@@ -450,9 +450,9 @@ WaypointFollower::convertGPSPosesToMapPoses(
   for (auto && curr_geopose : gps_poses) {
     auto request = std::make_shared<robot_localization::srv::FromLL::Request>();
     auto response = std::make_shared<robot_localization::srv::FromLL::Response>();
-    request->ll_point.latitude = curr_geopose.position.latitude;
-    request->ll_point.longitude = curr_geopose.position.longitude;
-    request->ll_point.altitude = curr_geopose.position.altitude;
+    request->ll_point.latitude = curr_geopose.pose.position.latitude;
+    request->ll_point.longitude = curr_geopose.pose.position.longitude;
+    request->ll_point.altitude = curr_geopose.pose.position.altitude;
 
     from_ll_to_map_client_->wait_for_service((std::chrono::seconds(1)));
     if (!from_ll_to_map_client_->invoke(request, response)) {
@@ -473,10 +473,10 @@ WaypointFollower::convertGPSPosesToMapPoses(
     } 
     else {      
       geometry_msgs::msg::PoseStamped curr_pose_map_frame;
+      curr_pose_map_frame.header = curr_geopose.header;
       curr_pose_map_frame.header.frame_id = global_frame_id_;
-      curr_pose_map_frame.header.stamp = this->now();
       curr_pose_map_frame.pose.position = response->map_point;
-      curr_pose_map_frame.pose.orientation = curr_geopose.orientation;
+      curr_pose_map_frame.pose.orientation = curr_geopose.pose.orientation;
       poses_in_map_frame_vector.push_back(curr_pose_map_frame);
     }
     waypoint_index++;

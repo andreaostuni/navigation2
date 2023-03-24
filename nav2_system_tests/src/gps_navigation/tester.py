@@ -17,7 +17,7 @@ import sys
 import time
 
 from action_msgs.msg import GoalStatus
-from geographic_msgs.msg import GeoPose
+from geographic_msgs.msg import GeoPoseStamped
 from nav2_msgs.action import FollowGPSWaypoints
 from nav2_msgs.srv import ManageLifecycleNodes
 
@@ -38,10 +38,10 @@ class WaypointFollowerTest(Node):
     def setWaypoints(self, waypoints):
         self.waypoints = []
         for wp in waypoints:
-            msg = GeoPose()
-            msg.position.latitude = wp[0]
-            msg.position.longitude = wp[1]
-            msg.orientation.w = 1.0
+            msg = GeoPoseStamped()
+            msg.pose.position.latitude = wp[0]
+            msg.pose.position.longitude = wp[1]
+            msg.pose.orientation.w = 1.0
             self.waypoints.append(msg)
 
     def run(self, block):

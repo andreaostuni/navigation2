@@ -23,7 +23,7 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "pluginlib/class_list_macros.hpp"
-#include "geographic_msgs/msg/geo_pose.hpp"
+#include "geographic_msgs/msg/geo_pose_stamped.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "nav2_msgs/action/follow_waypoints.hpp"
@@ -115,7 +115,7 @@ protected:
   /**
    * @brief Templated function to perform internal logic behind waypoint following,
    *        Both GPS and non GPS waypoint following callbacks makes use of this function when a client asked to do so.
-   *        Callbacks fills in appropriate types for the tempelated types, see followWaypointCallback funtions for details.
+   *        Callbacks fills in appropriate types for the tempelated types, see followWaypointCallback functions for details.
    *
    * @tparam T action_server
    * @tparam V feedback
@@ -162,7 +162,7 @@ protected:
    * @return std::vector<geometry_msgs::msg::PoseStamped>
    */
   std::vector<geometry_msgs::msg::PoseStamped> convertGPSPosesToMapPoses(
-    const std::vector<geographic_msgs::msg::GeoPose> & gps_poses);
+    const std::vector<geographic_msgs::msg::GeoPoseStamped> & gps_poses);
 
 
   /**
@@ -177,8 +177,8 @@ protected:
   std::vector<geometry_msgs::msg::PoseStamped> getLatestGoalPoses(const T & action_server);
 
   /**
-   * @brief given the poses creates the visualization markers to be visualizad
-   * in rviz
+   * @brief given the poses creates the visualization markers to be visualized
+   * in rviz2
    *
    * @param poses the poses from the action server
    * @return marker_array visualization_msgs::msg::MarkerArray

@@ -200,7 +200,7 @@ NavigateToGPSPoseNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goa
 {
   RCLCPP_INFO(
     logger_, "Begin navigating from current location to (%.2f, %.2f)",
-    goal->pose.position.longitude, goal->pose.position.latitude);
+    goal->pose.pose.position.longitude, goal->pose.pose.position.latitude);
 
   // convert the geo_poses into the current reference system
   geometry_msgs::msg::PoseStamped map_goal = convertGPSPoseToMapPose(goal->pose);

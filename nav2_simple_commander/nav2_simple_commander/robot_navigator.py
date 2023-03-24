@@ -26,6 +26,7 @@ from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import AssistedTeleop, BackUp, Spin
 from nav2_msgs.action import ComputePathThroughPoses, ComputePathToPose
 from nav2_msgs.action import FollowPath, FollowWaypoints, NavigateThroughPoses, NavigateToPose
+from nav2_msgs.action import FollowGPSWaypoints, NavigateToGPSPose, NavigateThroughGPSPoses
 from nav2_msgs.action import SmoothPath
 from nav2_msgs.srv import ClearEntireCostmap, GetCostmap, LoadMap, ManageLifecycleNodes
 
@@ -56,12 +57,18 @@ class BasicNavigator(Node):
         self.status = None
 
         amcl_pose_qos = QoSProfile(
-          durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-          reliability=QoSReliabilityPolicy.RELIABLE,
-          history=QoSHistoryPolicy.KEEP_LAST,
-          depth=1)
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1)
 
         self.initial_pose_received = False
+        self.nav_through_gps_poses_client = ActionClient(self,
+                                                         NavigateThroughGPSPoses,
+                                                         'navigate_through_gps_poses')
+        self.nav_to_gps_pose_client = ActionClient(self, NavigateToGPSPose, 'navigate_to_gps_pose')
+        self.follow_gps_waypoints_client = ActionClient(self, FollowGPSWaypoints,
+                                                        'follow_gps_waypoints')
         self.nav_through_poses_client = ActionClient(self,
                                                      NavigateThroughPoses,
                                                      'navigate_through_poses')
@@ -135,6 +142,29 @@ class BasicNavigator(Node):
         self.result_future = self.goal_handle.get_result_async()
         return True
 
+    def goThroughGPSPoses(self, gps_poses, behavior_tree=''):
+        """Send a `NavThroughGPSPoses` action request."""
+        self.debug("Waiting for 'NavigateThroughGPSPoses' action server")
+        while not self.nav_through_gps_poses_client.wait_for_server(timeout_sec=1.0):
+            self.info("'NavigateThroughGPSPoses' action server not available, waiting...")
+
+        goal_msg = NavigateThroughGPSPoses.Goal()
+        goal_msg.gps_poses = gps_poses
+        goal_msg.behavior_tree = behavior_tree
+
+        self.info(f'Navigating with {len(goal_msg.poses)} goals....')
+        send_goal_future = self.nav_through_gps_poses_client.send_goal_async(goal_msg,
+                                                                             self._feedbackCallback)
+        rclpy.spin_until_future_complete(self, send_goal_future)
+        self.goal_handle = send_goal_future.result()
+
+        if not self.goal_handle.accepted:
+            self.error(f'Goal with {len(gps_poses)} poses was rejected!')
+            return False
+
+        self.result_future = self.goal_handle.get_result_async()
+        return True
+
     def goToPose(self, pose, behavior_tree=''):
         """Send a `NavToPose` action request."""
         self.debug("Waiting for 'NavigateToPose' action server")
@@ -160,6 +190,31 @@ class BasicNavigator(Node):
         self.result_future = self.goal_handle.get_result_async()
         return True
 
+    def goToGPSPose(self, gps_pose, behavior_tree=''):
+        """Send a `NavToGPSPose` action request."""
+        self.debug("Waiting for 'NavigateToGPSPose' action server")
+        while not self.nav_to_gps_pose_client.wait_for_server(timeout_sec=1.0):
+            self.info("'NavigateToGPSPose' action server not available, waiting...")
+
+        goal_msg = NavigateToGPSPose.Goal()
+        goal_msg.pose = gps_pose
+        goal_msg.behavior_tree = behavior_tree
+
+        self.info('Navigating to goal: ' + str(gps_pose.latitude) + ' ' +
+                  str(gps_pose.longitude) + '...')
+        send_goal_future = self.nav_to_gps_pose_client.send_goal_async(goal_msg,
+                                                                       self._feedbackCallback)
+        rclpy.spin_until_future_complete(self, send_goal_future)
+        self.goal_handle = send_goal_future.result()
+
+        if not self.goal_handle.accepted:
+            self.error('Goal to ' + str(gps_pose.latitude) + ' ' +
+                       str(gps_pose.longitude) + ' was rejected!')
+            return False
+
+        self.result_future = self.goal_handle.get_result_async()
+        return True
+
     def followWaypoints(self, poses):
         """Send a `FollowWaypoints` action request."""
         self.debug("Waiting for 'FollowWaypoints' action server")
@@ -177,6 +232,28 @@ class BasicNavigator(Node):
 
         if not self.goal_handle.accepted:
             self.error(f'Following {len(poses)} waypoints request was rejected!')
+            return False
+
+        self.result_future = self.goal_handle.get_result_async()
+        return True
+
+    def followGPSWaypoints(self, gps_poses):
+        """Send a `FollowGPSWaypoints` action request."""
+        self.debug("Waiting for 'FollowGPSWaypoints' action server")
+        while not self.follow_gps_waypoints_client.wait_for_server(timeout_sec=1.0):
+            self.info("'FollowGPSWaypoints' action server not available, waiting...")
+
+        goal_msg = FollowGPSWaypoints.Goal()
+        goal_msg.gps_poses = gps_poses
+
+        self.info(f'Following {len(goal_msg.poses)} goals....')
+        send_goal_future = self.follow_gps_waypoints_client.send_goal_async(goal_msg,
+                                                                            self._feedbackCallback)
+        rclpy.spin_until_future_complete(self, send_goal_future)
+        self.goal_handle = send_goal_future.result()
+
+        if not self.goal_handle.accepted:
+            self.error(f'Following {len(gps_poses)} waypoints request was rejected!')
             return False
 
         self.result_future = self.goal_handle.get_result_async()

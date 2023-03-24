@@ -40,7 +40,7 @@ class NavigateThroughGPSPosesNavigator
 {
 public:
   using ActionT = nav2_msgs::action::NavigateThroughGPSPoses;
-  typedef std::vector<geographic_msgs::msg::GeoPose> Goals;
+  typedef std::vector<geographic_msgs::msg::GeoPoseStamped> Goals;
   typedef std::vector<geometry_msgs::msg::PoseStamped> MapGoals;
 
   /**

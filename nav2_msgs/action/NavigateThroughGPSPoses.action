@@ -1,5 +1,5 @@
 #goal definition
-geographic_msgs/GeoPose[] gps_poses
+geographic_msgs/GeoPoseStamped[] gps_poses
 string behavior_tree
 ---
 #result definition

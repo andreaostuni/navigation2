@@ -209,7 +209,7 @@ NavigateThroughGPSPosesNavigator::initializeGoalPoses(ActionT::Goal::ConstShared
   if (goal->gps_poses.size() > 0) {
     RCLCPP_INFO(
       logger_, "Begin navigating from current location through %zu poses to (%.2f, %.2f)",
-      goal->gps_poses.size(), goal->gps_poses.back().position.latitude, goal->gps_poses.back().position.longitude);
+      goal->gps_poses.size(), goal->gps_poses.back().pose.position.latitude, goal->gps_poses.back().pose.position.longitude);
   }
 
   // convert the geo_poses into the current reference system
