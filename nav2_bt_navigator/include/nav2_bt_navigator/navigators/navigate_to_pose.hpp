@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_TO_POSE_HPP_
-#define NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_TO_POSE_HPP_
+#ifndef NAVIGATORS_NAVIGATE_TO_POSE_HPP_
+#define NAVIGATORS_NAVIGATE_TO_POSE_HPP_
 
 #include <string>
 #include <vector>
@@ -21,7 +21,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "nav2_bt_navigator/navigator.hpp"
+// #include "nav2_bt_navigator/navigator.hpp"
+#include "nav2_core/behavior_tree_navigator.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "nav2_util/geometry_utils.hpp"
 #include "nav2_util/robot_utils.hpp"
@@ -36,7 +37,7 @@ namespace nav2_bt_navigator
  * @brief A navigator for navigating to a specified pose
  */
 class NavigateToPoseNavigator
-  : public nav2_bt_navigator::Navigator<nav2_msgs::action::NavigateToPose>
+  : public nav2_core::BehaviorTreeNavigator<nav2_msgs::action::NavigateToPose>
 {
 public:
   using ActionT = nav2_msgs::action::NavigateToPose;
@@ -45,7 +46,7 @@ public:
    * @brief A constructor for NavigateToPoseNavigator
    */
   NavigateToPoseNavigator()
-  : Navigator() {}
+  : BehaviorTreeNavigator() {}
 
   /**
    * @brief A configure state transition to configure navigator's state
@@ -133,4 +134,4 @@ protected:
 
 }  // namespace nav2_bt_navigator
 
-#endif  // NAV2_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_TO_POSE_HPP_
+#endif /* NAVIGATORS_NAVIGATE_TO_POSE_HPP_ */

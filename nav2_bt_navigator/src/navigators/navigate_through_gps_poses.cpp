@@ -17,39 +17,42 @@
 #include <set>
 #include <memory>
 #include <limits>
-#include "nav2_bt_navigator/navigators/navigate_through_poses.hpp"
+#include "nav2_bt_navigator/navigators/navigate_through_gps_poses.hpp"
 
 namespace nav2_bt_navigator
 {
 
 bool
-NavigateThroughPosesNavigator::configure(
+NavigateThroughGPSPosesNavigator::configure(
   rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
 {
   start_time_ = rclcpp::Time(0);
   auto node = parent_node.lock();
+  if(GPSNavigator::configure(parent_node,odom_smoother)){
+   
+    if (!node->has_parameter("goals_blackboard_id")) {
+      node->declare_parameter("goals_blackboard_id", std::string("goals"));
+    }
 
-  if (!node->has_parameter("goals_blackboard_id")) {
-    node->declare_parameter("goals_blackboard_id", std::string("goals"));
+    goals_blackboard_id_ = node->get_parameter("goals_blackboard_id").as_string();
+
+    if (!node->has_parameter("path_blackboard_id")) {
+      node->declare_parameter("path_blackboard_id", std::string("path"));
+    }
+
+    path_blackboard_id_ = node->get_parameter("path_blackboard_id").as_string();
+
+    // Odometry smoother object for getting current speed
+    odom_smoother_ = odom_smoother;
+
+    return true;
   }
-
-  goals_blackboard_id_ = node->get_parameter("goals_blackboard_id").as_string();
-
-  if (!node->has_parameter("path_blackboard_id")) {
-    node->declare_parameter("path_blackboard_id", std::string("path"));
-  }
-
-  path_blackboard_id_ = node->get_parameter("path_blackboard_id").as_string();
-
-  // Odometry smoother object for getting current speed
-  odom_smoother_ = odom_smoother;
-
-  return true;
+  return false;
 }
 
 std::string
-NavigateThroughPosesNavigator::getDefaultBTFilepath(
+NavigateThroughGPSPosesNavigator::getDefaultBTFilepath(
   rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node)
 {
   std::string default_bt_xml_filename;
@@ -70,7 +73,7 @@ NavigateThroughPosesNavigator::getDefaultBTFilepath(
 }
 
 bool
-NavigateThroughPosesNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
+NavigateThroughGPSPosesNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
 {
   auto bt_xml_filename = goal->behavior_tree;
 
@@ -84,17 +87,18 @@ NavigateThroughPosesNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
   initializeGoalPoses(goal);
 
   return true;
+
 }
 
 void
-NavigateThroughPosesNavigator::goalCompleted(
+NavigateThroughGPSPosesNavigator::goalCompleted(
   typename ActionT::Result::SharedPtr /*result*/,
   const nav2_behavior_tree::BtStatus /*final_bt_status*/)
 {
 }
 
 void
-NavigateThroughPosesNavigator::onLoop()
+NavigateThroughGPSPosesNavigator::onLoop()
 {
   using namespace nav2_util::geometry_utils;  // NOLINT
 
@@ -104,8 +108,8 @@ NavigateThroughPosesNavigator::onLoop()
 
   auto blackboard = bt_action_server_->getBlackboard();
 
-  Goals goal_poses;
-  blackboard->get<Goals>(goals_blackboard_id_, goal_poses);
+  MapGoals goal_poses;
+  blackboard->get<MapGoals>(goals_blackboard_id_, goal_poses);
 
   if (goal_poses.size() == 0) {
     bt_action_server_->publishFeedback(feedback_msg);
@@ -174,7 +178,7 @@ NavigateThroughPosesNavigator::onLoop()
 }
 
 void
-NavigateThroughPosesNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
+NavigateThroughGPSPosesNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
 {
   RCLCPP_INFO(logger_, "Received goal preemption request");
 
@@ -199,13 +203,17 @@ NavigateThroughPosesNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
 }
 
 void
-NavigateThroughPosesNavigator::initializeGoalPoses(ActionT::Goal::ConstSharedPtr goal)
+NavigateThroughGPSPosesNavigator::initializeGoalPoses(ActionT::Goal::ConstSharedPtr goal)
 {
-  if (goal->poses.size() > 0) {
+  
+  if (goal->gps_poses.size() > 0) {
     RCLCPP_INFO(
       logger_, "Begin navigating from current location through %zu poses to (%.2f, %.2f)",
-      goal->poses.size(), goal->poses.back().pose.position.x, goal->poses.back().pose.position.y);
+      goal->gps_poses.size(), goal->gps_poses.back().position.latitude, goal->gps_poses.back().position.longitude);
   }
+
+  // convert the geo_poses into the current reference system
+  MapGoals map_goals = convertGPSPosesToMapPoses(goal->gps_poses);
 
   // Reset state for new action feedback
   start_time_ = clock_->now();
@@ -213,12 +221,12 @@ NavigateThroughPosesNavigator::initializeGoalPoses(ActionT::Goal::ConstSharedPtr
   blackboard->set<int>("number_recoveries", 0);  // NOLINT
 
   // Update the goal pose on the blackboard
-  blackboard->set<Goals>(goals_blackboard_id_, goal->poses);
+  blackboard->set<MapGoals>(goals_blackboard_id_, map_goals);
 }
 
 }  // namespace nav2_bt_navigator
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
-  nav2_bt_navigator::NavigateThroughPosesNavigator,
+  nav2_bt_navigator::NavigateThroughGPSPosesNavigator,
   nav2_core::NavigatorBase)
