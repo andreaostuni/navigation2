@@ -152,7 +152,7 @@ class BasicNavigator(Node):
         goal_msg.gps_poses = gps_poses
         goal_msg.behavior_tree = behavior_tree
 
-        self.info(f'Navigating with {len(goal_msg.poses)} goals....')
+        self.info(f'Navigating with {len(goal_msg.gps_poses)} goals....')
         send_goal_future = self.nav_through_gps_poses_client.send_goal_async(goal_msg,
                                                                              self._feedbackCallback)
         rclpy.spin_until_future_complete(self, send_goal_future)
@@ -200,16 +200,16 @@ class BasicNavigator(Node):
         goal_msg.pose = gps_pose
         goal_msg.behavior_tree = behavior_tree
 
-        self.info('Navigating to goal: ' + str(gps_pose.latitude) + ' ' +
-                  str(gps_pose.longitude) + '...')
+        self.info('Navigating to goal: ' + str(gps_pose.pose.position.latitude) + ' ' +
+                  str(gps_pose.pose.position.longitude) + '...')
         send_goal_future = self.nav_to_gps_pose_client.send_goal_async(goal_msg,
                                                                        self._feedbackCallback)
         rclpy.spin_until_future_complete(self, send_goal_future)
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
-            self.error('Goal to ' + str(gps_pose.latitude) + ' ' +
-                       str(gps_pose.longitude) + ' was rejected!')
+            self.error('Goal to ' + str(gps_pose.pose.position.latitude) + ' ' +
+                       str(gps_pose.pose.position.longitude) + ' was rejected!')
             return False
 
         self.result_future = self.goal_handle.get_result_async()

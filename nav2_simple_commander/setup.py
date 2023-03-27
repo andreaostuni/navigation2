@@ -27,6 +27,8 @@ setup(
         'console_scripts': [
                 'example_nav_to_pose = nav2_simple_commander.example_nav_to_pose:main',
                 'example_nav_through_poses = nav2_simple_commander.example_nav_through_poses:main',
+                'example_nav_to_gps_pose = nav2_simple_commander.example_nav_to_gps_pose:main',
+                'example_nav_through_gps_poses = nav2_simple_commander.example_nav_through_gps_poses:main',
                 'example_waypoint_follower = nav2_simple_commander.example_waypoint_follower:main',
                 'example_follow_path = nav2_simple_commander.example_follow_path:main',
                 'demo_picking = nav2_simple_commander.demo_picking:main',

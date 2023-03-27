@@ -20,7 +20,7 @@ import rclpy
 from rclpy.duration import Duration
 
 """
-Basic navigation demo to go to poses.
+Basic navigation demo to go to pose.
 """
 
 
@@ -30,6 +30,14 @@ def main():
     navigator = BasicNavigator()
 
     # Set our demo's initial pose
+    # initial_pose = PoseStamped()
+    # initial_pose.header.frame_id = 'map'
+    # initial_pose.header.stamp = navigator.get_clock().now().to_msg()
+    # initial_pose.pose.position.x = 3.45
+    # initial_pose.pose.position.y = 2.15
+    # initial_pose.pose.orientation.z = 1.0
+    # initial_pose.pose.orientation.w = 0.0
+    # navigator.setInitialPose(initial_pose)
 
     # Activate navigation, if not autostarted. This should be called after setInitialPose()
     # or this will initialize at the origin of the map and update the costmap with bogus readings.
@@ -47,39 +55,18 @@ def main():
     # global_costmap = navigator.getGlobalCostmap()
     # local_costmap = navigator.getLocalCostmap()
 
-    # set our demo's goal poses
-    goal_poses = []
-    goal_pose1 = GeoPoseStamped()
-    goal_pose1.header.frame_id = 'utm'
-    goal_pose1.header.stamp = navigator.get_clock().now().to_msg()
-    goal_pose1.pose.position.latitude = 45.0605077360935
-    goal_pose1.pose.position.longitude = 7.65474133568523
-    goal_pose1.pose.orientation.w = 0.707
-    goal_pose1.pose.orientation.z = 0.707
-    goal_poses.append(goal_pose1)
-
-    # additional goals can be appended
-    goal_pose2 = GeoPoseStamped()
-    goal_pose2.header.frame_id = 'utm'
-    goal_pose2.header.stamp = navigator.get_clock().now().to_msg()
-    goal_pose2.pose.position.latitude = 45.06041833
-    goal_pose2.pose.position.longitude = 7.6546793
-    goal_pose2.pose.orientation.w = 0.707
-    goal_pose2.pose.orientation.z = 0.707
-    goal_poses.append(goal_pose2)
-    goal_pose3 = GeoPoseStamped()
-    goal_pose3.header.frame_id = 'utm'
-    goal_pose3.header.stamp = navigator.get_clock().now().to_msg()
-    goal_pose3.pose.position.latitude = 45.06032646
-    goal_pose3.pose.position.longitude = 7.65461377
-    goal_pose3.pose.orientation.w = 0.707
-    goal_pose3.pose.orientation.z = 0.707
-    goal_poses.append(goal_pose3)
+    # Go to our demos first goal pose
+    goal_pose = GeoPoseStamped()
+    goal_pose.header.frame_id = 'utm'
+    goal_pose.header.stamp = navigator.get_clock().now().to_msg()
+    goal_pose.pose.position.latitude = 45.0605077360935
+    goal_pose.pose.position.longitude = 7.65474133568523
+    goal_pose.pose.orientation.w = 1.0
 
     # sanity check a valid path exists
-    # path = navigator.getPathThroughPoses(initial_pose, goal_poses)
+    # path = navigator.getPath(initial_pose, goal_pose)
 
-    navigator.goThroughGPSPoses(goal_poses)
+    navigator.goToGPSPose(goal_pose)
 
     i = 0
     while not navigator.isTaskComplete():
@@ -102,15 +89,9 @@ def main():
                 navigator.cancelTask()
 
             # Some navigation request change to demo preemption
-            if Duration.from_msg(feedback.navigation_time) > Duration(seconds=35.0):
-                goal_pose4 = GeoPoseStamped()
-                goal_pose4.header.frame_id = 'utm'
-                goal_pose4.header.stamp = navigator.get_clock().now().to_msg()
-                goal_pose4.pose.position.latitude = 45.06023031
-                goal_pose4.pose.position.longitude = 7.65454673
-                goal_pose4.pose.orientation.w = 0.707
-                goal_pose4.pose.orientation.z = 0.707
-                navigator.goThroughGPSPoses([goal_pose4])
+            if Duration.from_msg(feedback.navigation_time) > Duration(seconds=18.0):
+                goal_pose.pose.position.x = -3.0
+                navigator.goToGPSPose(goal_pose)
 
     # Do something depending on the return code
     result = navigator.getResult()
